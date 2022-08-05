@@ -1,33 +1,18 @@
 package com.nguyennhatminh614.musicapp.presenter
 
-import android.app.Activity
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.provider.MediaStore
-import android.util.Log
-import androidx.core.app.ActivityCompat
 import com.nguyennhatminh614.musicapp.MusicActivity
 import com.nguyennhatminh614.musicapp.model.Song
 import com.nguyennhatminh614.musicapp.presenter.contract.SongContract
+import com.nguyennhatminh614.musicapp.service.MusicService
 import com.nguyennhatminh614.musicapp.utils.Constant
 import com.nguyennhatminh614.musicapp.utils.MyMusicPlayer
 
 class SongPresenter : SongContract.Presenter {
-    override fun requestPermission(
-        context: Context,
-        checkPermissionFunction: (Context) -> Boolean
-    ) {
-        if (!checkPermissionFunction(context)) {
-            ActivityCompat.requestPermissions(
-                context as Activity,
-                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
-                Constant.REQUEST_CODE_READ_EXTERNAL_STORAGE
-            )
-        }
-    }
-
     override fun loadMusic(contentResolver: ContentResolver): ArrayList<Song> {
         val selection: String = MediaStore.Audio.Media.IS_MUSIC + " != 0 "
         val cursor: Cursor by lazy {
@@ -82,14 +67,15 @@ class SongPresenter : SongContract.Presenter {
         return songList
     }
 
-    override fun navigateToMusicActivity(
+    override fun navigateToMusicActivityAndStartMusicService(
         position: Int,
         songList: ArrayList<Song>,
         context: Context
     ) {
-        val intent = Intent(context, MusicActivity::class.java)
         MyMusicPlayer.currentIndex = position
+        val intent = Intent(context, MusicActivity::class.java)
         intent.putExtra(Constant.KEY_SONG_OBJECT, songList)
+        context.startService(Intent(context, MusicService::class.java).apply { putExtra(Constant.KEY_SONG_OBJECT, songList) })
         context.startActivity(intent)
     }
 }

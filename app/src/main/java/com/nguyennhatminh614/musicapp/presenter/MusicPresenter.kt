@@ -5,17 +5,25 @@ import com.nguyennhatminh614.musicapp.model.Song
 import com.nguyennhatminh614.musicapp.presenter.contract.MusicContract
 import com.nguyennhatminh614.musicapp.utils.MyMusicPlayer
 
-class MusicPresenter(
-    private val mMusicView: MusicContract.View,
-    private val listSong: ArrayList<Song>
-) : MusicContract.Presenter {
-    val mediaPlayer: MediaPlayer = MyMusicPlayer.getInstance()
+class MusicPresenter() : MusicContract.Presenter {
+    private lateinit var mMusicView: MusicContract.View
+    private lateinit var listSong: ArrayList<Song>
+    private val mediaPlayer: MediaPlayer? = MyMusicPlayer.getInstance()
+
+    constructor(listSong: ArrayList<Song>) : this() {
+        this.listSong = listSong
+    }
+
+    constructor(mMusicView: MusicContract.View, listSong: ArrayList<Song>) : this(listSong) {
+        this.mMusicView = mMusicView
+        this.listSong = listSong
+    }
 
     override fun onLoadSong(song: Song) {
-        mediaPlayer.reset()
-        mediaPlayer.setDataSource(song.linkSong)
-        mediaPlayer.prepare()
-        mediaPlayer.start()
+        mediaPlayer?.reset()
+        mediaPlayer?.setDataSource(song.linkSong)
+        mediaPlayer?.prepare()
+        mediaPlayer?.start()
         mMusicView.onLoadSongUpdateView(song)
         mMusicView.onRunningSongUpdateView(song)
     }
@@ -25,7 +33,7 @@ class MusicPresenter(
             return
         }
         MyMusicPlayer.currentIndex--
-        mediaPlayer.reset()
+        mediaPlayer?.reset()
         onLoadSong(listSong[MyMusicPlayer.currentIndex])
     }
 
@@ -34,17 +42,17 @@ class MusicPresenter(
             return
         }
         MyMusicPlayer.currentIndex++
-        mediaPlayer.reset()
+        mediaPlayer?.reset()
         onLoadSong(listSong[MyMusicPlayer.currentIndex])
     }
 
     override fun onClickPlayPauseSong(onChangeIcon: (Boolean) -> Unit) {
-        onChangeIcon(mediaPlayer.isPlaying)
+        onChangeIcon(mediaPlayer?.isPlaying == true)
 
-        if (mediaPlayer.isPlaying) {
+        if (mediaPlayer?.isPlaying == true) {
             mediaPlayer.pause()
         } else {
-            mediaPlayer.start()
+            mediaPlayer?.start()
         }
     }
 }

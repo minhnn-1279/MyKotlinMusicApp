@@ -3,6 +3,10 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/MusicAppKotlin/app/src/main/res/layout/activity_main.xml" value="0.20521590423257802" />
+        <entry key="..\:/MusicAppKotlin/app/src/main/res/layout/activity_music.xml" value="0.20521590423257802" />
+        <entry key="..\:/MusicAppKotlin/app/src/main/res/layout/current_song_layout.xml" value="0.20436083796494228" />
+        <entry key="..\:/MusicAppKotlin/app/src/main/res/layout/song_item_layout.xml" value="0.1" />
         <entry key="..\:/MyKotlinMusicApp/app/src/main/res/drawable/bg_black_border.xml" value="0.169" />
         <entry key="..\:/MyKotlinMusicApp/app/src/main/res/drawable/ic_baseline_music_note_24.xml" value="0.169" />
         <entry key="..\:/MyKotlinMusicApp/app/src/main/res/layout/activity_main.xml" value="0.264" />

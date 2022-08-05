@@ -1,12 +1,11 @@
 package com.nguyennhatminh614.musicapp
 
-import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.view.View
-import androidx.annotation.RequiresApi
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -16,26 +15,30 @@ import com.nguyennhatminh614.musicapp.model.Song
 import com.nguyennhatminh614.musicapp.presenter.MusicPresenter
 import com.nguyennhatminh614.musicapp.presenter.SongPresenter
 import com.nguyennhatminh614.musicapp.presenter.contract.MusicContract
+import com.nguyennhatminh614.musicapp.utils.Constant
 import com.nguyennhatminh614.musicapp.utils.GlobalExtensionFunction.Companion.createImageUriWithThisID
-import com.nguyennhatminh614.musicapp.utils.GlobalExtensionFunction.Companion.loadGlideImageWithUri
+import com.nguyennhatminh614.musicapp.utils.GlobalExtensionFunction.Companion.loadGlideImageWithURI
+import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity() {
-    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding: ActivityMainBinding by lazy { ActivityMainBinding.inflate(layoutInflater) }
         setContentView(binding.root)
 
-        val songPresenter = SongPresenter()
+        grantPermission()
 
-        songPresenter.requestPermission(this@MainActivity) {
-            hasReadExternalMemoryPermission(it)
-        }
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.READ_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            val songPresenter by lazy { SongPresenter() }
+            val songList: ArrayList<Song> = ArrayList()
+            songList.addAll(songPresenter.loadMusic(contentResolver))
 
-        if (hasReadExternalMemoryPermission(this@MainActivity)) {
-            val songList: ArrayList<Song> = songPresenter.loadMusic(contentResolver)
             with(binding) {
-                if (songList.size != 0) {
+                if (songList.isNotEmpty()) {
                     rcSong.adapter = SongAdapter(songList, this@MainActivity) {
                         val position: Int = it
                         val thisSong = songList[position]
@@ -43,7 +46,7 @@ class MainActivity : AppCompatActivity() {
                             override fun onLoadSongUpdateView(song: Song) {
                                 tvAuthor.text = song.author
                                 tvTitleSong.text = song.nameSong
-                                imgSong.loadGlideImageWithUri(
+                                imgSong.loadGlideImageWithURI(
                                     this@MainActivity,
                                     song.imageID.createImageUriWithThisID()
                                 )
@@ -58,7 +61,7 @@ class MainActivity : AppCompatActivity() {
                         currentSongLayout.visibility = View.VISIBLE
                         tvAuthor.text = thisSong.author
                         tvTitleSong.text = thisSong.nameSong
-                        imgSong.loadGlideImageWithUri(
+                        imgSong.loadGlideImageWithURI(
                             this@MainActivity,
                             thisSong.imageID.createImageUriWithThisID()
                         )
@@ -85,7 +88,11 @@ class MainActivity : AppCompatActivity() {
                             musicPresenter.onClickNextSong()
                         }
 
-                        songPresenter.navigateToMusicActivity(position, songList, this@MainActivity)
+                        songPresenter.navigateToMusicActivityAndStartMusicService(
+                            position,
+                            songList,
+                            this@MainActivity
+                        )
                     }
 
                     rcSong.layoutManager = LinearLayoutManager(this@MainActivity)
@@ -97,11 +104,51 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun hasReadExternalMemoryPermission(context: Context): Boolean {
-        val result: Int = ContextCompat.checkSelfPermission(
-            context,
-            android.Manifest.permission.READ_EXTERNAL_STORAGE
-        )
-        return result == PackageManager.PERMISSION_GRANTED
+    private fun grantPermission() {
+        if (ContextCompat.checkSelfPermission(
+                this,
+                android.Manifest.permission.READ_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                Constant.REQUEST_CODE_READ_EXTERNAL_STORAGE
+            )
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            Constant.REQUEST_CODE_READ_EXTERNAL_STORAGE -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_DENIED) {
+                    AlertDialog.Builder(this).apply {
+                        setTitle(Constant.PERMISSION_DENIED_ALERT_DIALOG_TITLE)
+                        setMessage(Constant.PERMISSION_DENIED_ALERT_DIALOG_MESSAGE)
+                        setPositiveButton(Constant.BUTTON_OK) { dialog, id ->
+                            run {
+                                ActivityCompat.requestPermissions(
+                                    this@MainActivity,
+                                    arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE),
+                                    Constant.REQUEST_CODE_READ_EXTERNAL_STORAGE
+                                )
+                            }
+                        }
+                        setNegativeButton(Constant.BUTTON_DENIED) { dialog, id ->
+                            run {
+                                exitProcess(0)
+                            }
+                        }
+                    }.create().show()
+
+                }
+            }
+        }
     }
 }
